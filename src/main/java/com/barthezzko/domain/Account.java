@@ -23,4 +23,41 @@ public class Account {
 	public Currency getCurrency() {
 		return currency;
 	}
+	
+	public void topUp(BigDecimal topUpAmount){
+		amountNet = amountNet.add(topUpAmount);
+	}
+	
+	public static class Builder {
+		
+		private String clientName;
+		private Long accountId;
+		private BigDecimal amountNet;
+		private Currency currency;
+		
+		public Builder clientName(String clientName) {
+			this.clientName = clientName;
+			return this;
+		}
+		public Builder accountId(Long accountId) {
+			this.accountId = accountId;
+			return this;
+		}
+		public Builder amountNet(BigDecimal amountNet) {
+			this.amountNet = amountNet;
+			return this;
+		}
+		public Builder currency(Currency currency) {
+			this.currency = currency;
+			return this;
+		}
+		public Account build(){
+			Account acc = new Account();
+			acc.accountId = accountId;
+			acc.clientName = clientName;
+			acc.amountNet = amountNet;
+			acc.currency = currency;
+			return acc;
+		}
+	} 
 }

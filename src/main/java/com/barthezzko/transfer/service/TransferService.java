@@ -13,4 +13,6 @@ public interface TransferService {
 	
 	Account registerAccount(String name, Long accountId, Currency curr);
 	
+	void topUpAccount(Long accountId, BigDecimal amount);
+	
 }
