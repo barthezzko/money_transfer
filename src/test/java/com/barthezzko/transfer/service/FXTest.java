@@ -11,7 +11,7 @@ import com.barthezzko.domain.Currency;
 
 public class FXTest {
 
-	private FXService fx = new FXService();
+	private FXServiceImpl fx = new FXServiceImpl();
 	
 	@Test
 	public void testFX(){

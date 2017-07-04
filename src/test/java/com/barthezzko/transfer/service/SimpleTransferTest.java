@@ -14,7 +14,8 @@ import com.barthezzko.domain.Currency;
 
 public class SimpleTransferTest {
 
-	private TransferService transfService = new TransferServiceImpl();
+	private FXService fxService = new FXServiceImpl();
+	private TransferService transfService = new TransferServiceImpl(fxService);
 	
 	@Before
 	public void before(){
