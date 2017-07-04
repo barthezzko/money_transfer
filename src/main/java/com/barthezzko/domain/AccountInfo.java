@@ -31,4 +31,12 @@ public final class AccountInfo {
 	public Currency getCurrency() {
 		return currency;
 	}
+
+	@Override
+	public String toString() {
+		return "AccountInfo [clientName=" + clientName + ", accountId=" + accountId + ", amountNet=" + amountNet
+				+ ", currency=" + currency + "]";
+	}
+	
+	
 }
