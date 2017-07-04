@@ -17,3 +17,12 @@ GSON | JSON marshalling | https://github.com/google/gson
 ## Running the application
 
 ` java com.barthezzko.server.Server `
+
+## Rest method overview API
+TBD: after implementing
+
+## TBD (to implement)
+* Integration tests with running service
+* Multi-threaded testing (add a delay paramaterisation to TransferServiceImpl) <- to check locking mechanism
+* User -> User
+* Edge cases
