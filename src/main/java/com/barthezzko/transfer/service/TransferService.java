@@ -2,7 +2,7 @@ package com.barthezzko.transfer.service;
 
 import java.math.BigDecimal;
 
-import com.barthezzko.domain.Account;
+import com.barthezzko.domain.AccountInfo;
 import com.barthezzko.domain.Currency;
 
 public interface TransferService {
@@ -13,6 +13,6 @@ public interface TransferService {
 	
 	void topUpAccount(Long accountId, BigDecimal amount);
 
-	Account getAccount(long accountId);
+	AccountInfo getAccountInfo(long accountId);
 	
 }

@@ -7,11 +7,13 @@ import java.util.Map;
 import com.barthezzko.common.MoneyTransferException;
 import com.barthezzko.domain.Account;
 import com.barthezzko.domain.Account.Builder;
+import com.barthezzko.domain.AccountInfo;
 import com.barthezzko.domain.Currency;
 
 public class TransferServiceImpl implements TransferService {
 
 	private final Map<Long, Account> accountsRegistered = new HashMap<>();
+	private final FXService fxService = new FXService();
 
 	public void transfer(Long from, Long to, BigDecimal amount) {
 		if (from == to) {
@@ -25,25 +27,31 @@ public class TransferServiceImpl implements TransferService {
 		} else if (toAccount == null) {
 			throw new MoneyTransferException("Payee account for [id=" + from + "] doesn't exist");
 		} else {
-			//Concurrency in Practice
-			if (fromAccount.getAccountId() > toAccount.getAccountId()){
+			// Concurrency in Practice
+			if (fromAccount.getAccountId() > toAccount.getAccountId()) {
 				synchronized (from) {
 					synchronized (to) {
 						transferInt(fromAccount, toAccount, amount);
 					}
-				}	
+				}
 			} else {
 				synchronized (to) {
 					synchronized (from) {
 						transferInt(fromAccount, toAccount, amount);
 					}
-				}	
+				}
 			}
-			
+
 		}
 	}
+
 	private void transferInt(Account from, Account to, BigDecimal amount){
-		
+		if (from.getAmountNet().compareTo(amount)<0){
+			throw new MoneyTransferException("Unsufficient funds for account [id="+from.getAccountId()+"]");
+		}
+		from.topUp(amount.negate());
+		BigDecimal payeeAmount = from.getCurrency() == to.getCurrency() ? amount : fxService.convert(amount, from.getCurrency(), to.getCurrency());
+		to.topUp(payeeAmount);
 	}
 
 	@Override
@@ -68,9 +76,18 @@ public class TransferServiceImpl implements TransferService {
 		}
 	}
 
-	@Override
-	public Account getAccount(long accountId) {
+	
+	private Account getAccount(long accountId) {
 		return accountsRegistered.get(accountId);
+	}
+
+	@Override
+	public AccountInfo getAccountInfo(long accountId) {
+		Account targetAcc = getAccount(accountId);
+		if (targetAcc!=null){
+			return targetAcc.getAccountInfo();
+		}
+		return null;
 	}
 
 }
