@@ -26,13 +26,26 @@ public class FXService {
 	/**
 	 * 
 	 * For now we don't take int
+	 * 
 	 * @param amount
 	 * @param from
 	 * @param to
 	 * @return
 	 */
 	public BigDecimal convert(BigDecimal amount, Currency from, Currency to) {
-		return null;
+		if (from == to) {
+			return amount;
+		} else {
+			if (from == Currency.USD) {
+				return amount.multiply(fxRates.get(to)).setScale(2, BigDecimal.ROUND_HALF_UP);
+			} else if (to == Currency.USD) {
+				return amount.divide(fxRates.get(from), 2, BigDecimal.ROUND_HALF_UP);
+			} else {
+				// neither is USD, let's do cross-rate
+				BigDecimal usdValue = convert(amount, from, Currency.USD);
+				return convert(usdValue, Currency.USD, to);
+			}
+		}
 	}
 
 }
