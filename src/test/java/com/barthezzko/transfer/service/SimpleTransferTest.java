@@ -13,8 +13,7 @@ import com.barthezzko.domain.Currency;
 public class SimpleTransferTest {
 
 	private TransferService transfService = new TransferServiceImpl();
-	private Account acc1 = null, acc2 = null;
-
+	
 	/*
 	 * NB: test same number during register exception
 	 */
@@ -27,16 +26,26 @@ public class SimpleTransferTest {
 
 	@Test
 	public void getAccountTest() {
-		acc1 = transfService.registerAccount("Smith, John", 651437652L, Currency.USD);
-		assertEquals(acc1, transfService.getAccount(651437652L));
+		transfService.registerAccount("Smith, John", 651437652L, Currency.USD);
+		Account acc1 = transfService.getAccount(651437652L);
+		assertEquals(651437652L, acc1.getAccountId().longValue());
+		assertEquals("Smith, John", acc1.getClientName());
+		assertEquals(Currency.USD, acc1.getCurrency());
+		assertEquals(BigDecimal.ZERO, acc1.getAmountNet());
+		transfService.topUpAccount(651437652L, BigDecimal.valueOf(123));
+		
 	}
 
 	@Test
 	public void simpleTransferTest() {
-		acc1 = transfService.registerAccount("Smith, John", 651437652L, Currency.USD);
-		acc2 = transfService.registerAccount("Baytsurov, Mikhail", 145325698L, Currency.RUR);
-		transfService.transfer(acc1, acc2, BigDecimal.valueOf(100.0));
-		assertEquals(acc1, transfService.getAccount(651437652L));
+		transfService.registerAccount("Smith, John", 651437652L, Currency.USD);
+		transfService.topUpAccount(651437652L, BigDecimal.valueOf(1000));
+		
+		transfService.registerAccount("Baytsurov, Mikhail", 145325698L, Currency.USD);
+		transfService.transfer(651437652L, 145325698L, BigDecimal.valueOf(100));
+		
+		assertEquals(BigDecimal.valueOf(900), transfService.getAccount(651437652L).getAmountNet());
+		assertEquals(BigDecimal.valueOf(100), transfService.getAccount(145325698L).getAmountNet());
 	}
 
 }

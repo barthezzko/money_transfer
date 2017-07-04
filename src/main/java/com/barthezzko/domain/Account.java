@@ -24,6 +24,8 @@ public class Account {
 		return currency;
 	}
 	
+	//remove public. no explicit account exposure.
+	//AccountInfo helper class or protection copy?
 	public void topUp(BigDecimal topUpAmount){
 		amountNet = amountNet.add(topUpAmount);
 	}

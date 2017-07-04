@@ -7,12 +7,12 @@ import com.barthezzko.domain.Currency;
 
 public interface TransferService {
 
-	void transfer(Account from, Account to, BigDecimal amount);
+	void transfer(Long from, Long to, BigDecimal amount);
 	
-	Account getAccount(Long accountId);
-	
-	Account registerAccount(String name, Long accountId, Currency curr);
+	void registerAccount(String name, Long accountId, Currency curr);
 	
 	void topUpAccount(Long accountId, BigDecimal amount);
+
+	Account getAccount(long accountId);
 	
 }
