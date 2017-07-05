@@ -37,6 +37,4 @@ public final class AccountInfo {
 		return "AccountInfo [clientName=" + clientName + ", accountId=" + accountId + ", amountNet=" + amountNet
 				+ ", currency=" + currency + "]";
 	}
-	
-	
 }

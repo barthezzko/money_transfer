@@ -42,15 +42,36 @@ public class Server {
 	private void runServer() {
 		logger.info("Starting REST service on port:" + SERVER_PORT);
 		port(SERVER_PORT);
-		before("/*", (q, a) -> logger.info(q.pathInfo()));
+		before("/*", (q, a) -> {
+			if (q.queryParams() != null && q.queryParams().size() > 0) {
+				StringBuilder sb = new StringBuilder();
+				q.queryParams().forEach(key->{
+					sb.append(String.format("%s=%s; ", key, q.queryParams(key)));	
+				});
+				logger.info(q.pathInfo() + ", params: {" + sb.toString() + "}");
+			} else {
+				logger.info(q.pathInfo());
+			}
+
+		});
 		exception(Exception.class, (e, req, res) -> {
 			logger.error(e, e);
 			res.body(toJson(Response.error("Error during processing your request, cause: " + e.getMessage())));
 			res.status(500);
 		});
-		get("/getAccount/:accountId", (req, res) -> {
+		get("serverStatus", (req, res) -> "ok");
+		addAccountMappings();
+	}
+
+	private void addAccountMappings() {
+		get("/account/:accountId", (req, res) -> {
 			res.type("application/json");
 			return Response.success(transferService.getAccountInfo(Long.valueOf(req.params("accountId"))));
+		}, json());
+		post("/account/add", (req, res) -> {
+			transferService.registerAccount(req.queryParams("clientName"), Long.valueOf(req.queryParams("accountId")),
+					Currency.valueOf(req.queryParams("currency")));
+			return Response.success("Account " + req.queryParams("accountId") + " created");
 		}, json());
 	}
 
@@ -64,11 +85,11 @@ public class Server {
 			this.payload = payload;
 		}
 
-		static Response success(Object obj) {
+		public static Response success(Object obj) {
 			return new Response(ResponseType.SUCCESS, obj);
 		}
 
-		static Response error(String error) {
+		public static Response error(String error) {
 			return new Response(ResponseType.ERROR, error);
 		}
 
@@ -94,6 +115,7 @@ public class Server {
 	public static String toJson(Object object) {
 		return gson.toJson(object);
 	}
+
 	private static ResponseTransformer json() {
 		return Server::toJson;
 	}
