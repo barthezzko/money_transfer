@@ -5,7 +5,6 @@ import static org.junit.Assert.assertEquals;
 import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Logger;
 import org.eclipse.jetty.client.HttpClient;
@@ -33,19 +32,12 @@ public class ServerIntegrationTest {
 		void onResponse(ContentResponse response);
 	}
 	
-	@BeforeClass
-	public static void beforeClass(){
-		Server.main(null);
-	}
 	
 	@Before
 	public void before(){
-		cleanServerState();
+		Server.main(false);
 	}
 	
-	private void cleanServerState() {
-		
-	}
 	
 	private void invoke(String url, HttpMethod method, HttpRequestCallback callback){
 		invoke(url, method, null, callback);

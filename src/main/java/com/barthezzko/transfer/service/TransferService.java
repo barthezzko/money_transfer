@@ -5,14 +5,27 @@ import java.math.BigDecimal;
 import com.barthezzko.domain.AccountInfo;
 import com.barthezzko.domain.Currency;
 
+/**
+ * API for client-account management
+ * @author barthezzko
+ *
+ */
 public interface TransferService {
 
-	void transfer(Long from, Long to, BigDecimal amount);
+	long registerClient(String clientName);
 	
-	void registerAccount(String name, Long accountId, Currency curr);
+	void removeClient(long clientId);
 	
-	void topUpAccount(Long accountId, BigDecimal amount);
+	long registerAccount(long clientId, Currency curr);
+	
+	void removeAccount(long accountId);
+	
+	void transfer(long fromAccount, long toAccount, BigDecimal amount);
+	
+	void topUpAccount(long accountId, BigDecimal amount);
 
 	AccountInfo getAccountInfo(long accountId);
+	
+	AccountInfo getClientInfo(long clientInfo);
 	
 }

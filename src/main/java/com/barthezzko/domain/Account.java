@@ -4,16 +4,13 @@ import java.math.BigDecimal;
 
 public class Account {
 
-	private String clientName;
-	private Long accountId;
+	private long accountId;
+	private long clientId;
 	private BigDecimal amountNet;
 	private Currency currency;
 	
 	private Account(){}
 	
-	public String getClientName() {
-		return clientName;
-	}
 	public Long getAccountId() {
 		return accountId;
 	}
@@ -25,7 +22,7 @@ public class Account {
 	}
 	
 	public AccountInfo getAccountInfo(){
-		return new AccountInfo(clientName, accountId, amountNet, currency);
+		return new AccountInfo(accountId, amountNet, currency);
 	}
 	
 	public void topUp(BigDecimal topUpAmount){
@@ -34,15 +31,10 @@ public class Account {
 	
 	public static class Builder {
 		
-		private String clientName;
 		private Long accountId;
 		private BigDecimal amountNet;
 		private Currency currency;
 		
-		public Builder clientName(String clientName) {
-			this.clientName = clientName;
-			return this;
-		}
 		public Builder accountId(Long accountId) {
 			this.accountId = accountId;
 			return this;
@@ -58,7 +50,6 @@ public class Account {
 		public Account build(){
 			Account acc = new Account();
 			acc.accountId = accountId;
-			acc.clientName = clientName;
 			acc.amountNet = amountNet;
 			acc.currency = currency;
 			return acc;

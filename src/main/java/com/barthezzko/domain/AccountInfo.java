@@ -3,21 +3,15 @@ package com.barthezzko.domain;
 import java.math.BigDecimal;
 
 public final class AccountInfo {
-	
-	private final String clientName;
+
 	private final Long accountId;
 	private final BigDecimal amountNet;
 	private final Currency currency;
-	
-	public AccountInfo(String clientName, Long accountId, BigDecimal amountNet, Currency currency) {
-		this.clientName = clientName;
+
+	public AccountInfo(Long accountId, BigDecimal amountNet, Currency currency) {
 		this.accountId = accountId;
 		this.amountNet = amountNet;
 		this.currency = currency;
-	}
-
-	public String getClientName() {
-		return clientName;
 	}
 
 	public Long getAccountId() {
@@ -34,7 +28,6 @@ public final class AccountInfo {
 
 	@Override
 	public String toString() {
-		return "AccountInfo [clientName=" + clientName + ", accountId=" + accountId + ", amountNet=" + amountNet
-				+ ", currency=" + currency + "]";
+		return "AccountInfo [accountId=" + accountId + ", amountNet=" + amountNet + ", currency=" + currency + "]";
 	}
 }
