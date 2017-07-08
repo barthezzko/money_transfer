@@ -2,7 +2,8 @@ package com.barthezzko.transfer.service;
 
 import java.math.BigDecimal;
 
-import com.barthezzko.domain.AccountInfo;
+import com.barthezzko.domain.Account;
+import com.barthezzko.domain.Client;
 import com.barthezzko.domain.Currency;
 
 /**
@@ -12,20 +13,18 @@ import com.barthezzko.domain.Currency;
  */
 public interface TransferService {
 
-	long registerClient(String clientName);
+	String registerClient(String clientName);
 	
-	void removeClient(long clientId);
+	String registerAccount(String clientId, Currency curr);
 	
-	long registerAccount(long clientId, Currency curr);
+	void transferAcc2Acc(String fromAccount, String toAccount, BigDecimal amount);
 	
-	void removeAccount(long accountId);
+	void transferC2C(String fromClient, String toClient, BigDecimal amount, Currency currency);
 	
-	void transfer(long fromAccount, long toAccount, BigDecimal amount);
-	
-	void topUpAccount(long accountId, BigDecimal amount);
+	void topUpAccount(String accountId, BigDecimal amount);
 
-	AccountInfo getAccountInfo(long accountId);
+	Account getAccount(String accountId);
 	
-	AccountInfo getClientInfo(long clientInfo);
+	Client getClient(String clientId);
 	
 }

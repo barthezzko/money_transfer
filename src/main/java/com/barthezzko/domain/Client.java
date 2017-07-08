@@ -1,34 +1,35 @@
 package com.barthezzko.domain;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 
 public class Client {
-	
-	private long clientId;
+	private String clientId;
 	private String clientName;
-	private Map<Long, Account> accounts;
+	private Map<String, Account> accounts = new HashMap<>();
 	
-	public long getClientId() {
-		return clientId;
-	}
-	public void setClientId(long clientId) {
+	public Client(String clientId, String clientName) {
 		this.clientId = clientId;
+		this.clientName = clientName;
+	}
+	
+	public String getClientId() {
+		return clientId;
 	}
 	public String getClientName() {
 		return clientName;
 	}
-	public void setClientName(String clientName) {
-		this.clientName = clientName;
+	public Map<String, Account> getAccounts() {
+		return Collections.unmodifiableMap(accounts);
 	}
-	public Map<Long, Account> getAccounts() {
-		return accounts;
-	}
-	public void setAccounts(Map<Long, Account> accounts) {
-		this.accounts = accounts;
+	public void addAccount(Account account) {
+		accounts.put(account.getAccountId(), account);
 	}
 
 	@Override
 	public String toString() {
 		return "Client [clientId=" + clientId + ", clientName=" + clientName + ", accounts=" + accounts + "]";
 	}
+	
 }

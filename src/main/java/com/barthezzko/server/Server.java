@@ -1,6 +1,13 @@
 package com.barthezzko.server;
 
-import static spark.Spark.*;
+import static spark.Spark.after;
+import static spark.Spark.before;
+import static spark.Spark.exception;
+import static spark.Spark.get;
+import static spark.Spark.port;
+import static spark.Spark.post;
+
+import java.math.BigDecimal;
 
 import org.apache.log4j.Logger;
 
@@ -15,7 +22,6 @@ import spark.ResponseTransformer;
 public class Server {
 
 	private static int SERVER_PORT = 9000;
-	private static boolean ADD_FAKE_DATA = true;
 	private static Logger logger = Logger.getLogger(Server.class);
 	private static final Gson gson = new Gson();
 	private TransferService transferService;
@@ -23,7 +29,8 @@ public class Server {
 	public static void main(String[] args) {
 		Server server = new Server();
 		server.prepareInjection();
-		if (ADD_FAKE_DATA) {
+		if ("addFakeData".equals(args[0])) {
+			logger.info("Adding fake data...");
 			server.addFakeData();
 		}
 		server.runServer();
@@ -43,20 +50,26 @@ public class Server {
 		logger.info("Starting REST service on port:" + SERVER_PORT);
 		port(SERVER_PORT);
 		before("/*", (q, a) -> {
-			if (q.queryParams() != null && q.queryParams().size() > 0) {
-				StringBuilder sb = new StringBuilder();
-				q.queryParams().forEach(key->{
-					sb.append(String.format("%s=%s; ", key, q.queryParams(key)));	
+			StringBuilder sb = new StringBuilder(q.requestMethod()).append(" | ").append(q.pathInfo()).append(" | payload: [");
+			if (q.queryParams() != null) {
+				q.queryParams().forEach(key -> {
+					sb.append(String.format("%s=%s; ", key, q.queryParams(key)));
 				});
-				logger.info(q.pathInfo() + ", params: {" + sb.toString() + "}");
-			} else {
-				logger.info(q.pathInfo());
 			}
+			if (q.params()!=null){
+				q.params().entrySet().forEach(entry -> {
+					sb.append(String.format("%s=%s; ", entry.getKey(), entry.getValue()));
+				});
+			}
+			logger.info(sb.append("]").toString());	
 
+		});
+		after("/*", (q, a) -> {
+			logger.info("Server responds: " + a.body());
 		});
 		exception(Exception.class, (e, req, res) -> {
 			logger.error(e, e);
-			res.body(toJson(Response.error("Error during processing your request, cause: " + e.getMessage())));
+			res.body(toJson(error("Error during processing your request, cause: " + e.getMessage())));
 			res.status(500);
 		});
 		get("serverStatus", (req, res) -> "ok");
@@ -64,15 +77,57 @@ public class Server {
 	}
 
 	private void addAccountMappings() {
-		get("/account/:accountId", (req, res) -> {
-			res.type("application/json");
-			return Response.success(transferService.getAccountInfo(Long.valueOf(req.params("accountId"))));
+		post("/client/add", (req, res) -> {
+			return success("Client [clientId=" + transferService.registerClient(req.queryParams("clientName"))
+					+ "] has been created");
 		}, json());
 		post("/account/add", (req, res) -> {
-			transferService.registerAccount(req.queryParams("clientName"), Long.valueOf(req.queryParams("accountId")),
-					Currency.valueOf(req.queryParams("currency")));
-			return Response.success("Account " + req.queryParams("accountId") + " created");
+			String clientId = req.queryParams("clientId");
+			return success("Account [accountId="
+					+ transferService.registerAccount(clientId, Currency.valueOf(req.queryParams("currency")))
+					+ " has been created for clientId=" + clientId);
 		}, json());
+		post("/transfer/acc2acc", (req, res) -> {
+			String sourceAccount = req.queryParams("sourceAcc");
+			String targetAccount = req.queryParams("destAcc");
+			BigDecimal amount = BigDecimal.valueOf(Double.valueOf(req.queryParams("amount")));
+			transferService.transferAcc2Acc(sourceAccount, targetAccount, amount);
+			return success("Account-to-Account transfer [" + sourceAccount + "->" + targetAccount + ", amount=" + amount
+					+ "] has been created");
+		}, json());
+		post("/transfer/acc2acc", (req, res) -> {
+			String sourceClient = req.queryParams("sourceClient");
+			String targetClient = req.queryParams("destClient");
+			BigDecimal amount = BigDecimal.valueOf(Double.valueOf(req.queryParams("amount")));
+			Currency currency = Currency.valueOf(req.queryParams("currency"));
+
+			transferService.transferC2C(sourceClient, targetClient, amount, currency);
+			return success("Client-To-Client transfer [" + sourceClient + "->" + targetClient + ", amount=" + amount
+					+ "] has been created");
+		}, json());
+
+		post("/account/topup", (req, res) -> {
+			String destAccount = req.queryParams("destAccount");
+			BigDecimal amount = BigDecimal.valueOf(Double.valueOf(req.queryParams("amount")));
+
+			transferService.topUpAccount(destAccount, amount);
+			return success("Account [accountId=" + destAccount + "] was topped up by " + amount);
+		}, json());
+
+		get("/account/:accountId", (req, res) -> {
+			return success(transferService.getAccount(req.params("accountId")));
+		}, json());
+		get("/client/:clientId", (req, res) -> {
+			return success(transferService.getClient(req.params("clientId")));
+		});
+	}
+
+	public static Response success(Object obj) {
+		return new Response(ResponseType.SUCCESS, obj);
+	}
+
+	public static Response error(String error) {
+		return new Response(ResponseType.ERROR, error);
 	}
 
 	public static class Response {
@@ -83,14 +138,6 @@ public class Server {
 		private Response(ResponseType responseType, Object payload) {
 			this.responseType = responseType;
 			this.payload = payload;
-		}
-
-		public static Response success(Object obj) {
-			return new Response(ResponseType.SUCCESS, obj);
-		}
-
-		public static Response error(String error) {
-			return new Response(ResponseType.ERROR, error);
 		}
 
 		public ResponseType getResponseType() {
@@ -107,9 +154,16 @@ public class Server {
 	}
 
 	private void addFakeData() {
-		transferService.registerAccount("Blade, Boris", 810111L, Currency.RUR);
-		transferService.registerAccount("Blade, Boris", 978111L, Currency.EUR);
-		transferService.registerAccount("Blade, Boris", 840111L, Currency.USD);
+		/* registering clients */
+		String yuriPetrovaId = transferService.registerClient("Petrova, Yuri");
+		String borisTheBladeId = transferService.registerClient("Boris, The Blade");
+		String turkishId = transferService.registerClient("Turkish");
+
+		/* registering accounts */
+		transferService.registerAccount(yuriPetrovaId, Currency.USD);
+		transferService.registerAccount(yuriPetrovaId, Currency.RUR);
+		transferService.registerAccount(turkishId, Currency.USD);
+		transferService.registerAccount(borisTheBladeId, Currency.EUR);
 	}
 
 	public static String toJson(Object object) {
