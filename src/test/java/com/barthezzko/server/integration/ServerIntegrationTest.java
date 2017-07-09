@@ -72,7 +72,6 @@ public class ServerIntegrationTest {
 					request.param(e.getKey(), e.getValue());
 				});
 				response = request.send();
-				logger.info("invoked POST for " + url + ", params =" + payload);
 				break;
 			case PUT:
 				break;

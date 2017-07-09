@@ -52,7 +52,7 @@ public class Server {
 		logger.info("Starting REST service on port:" + SERVER_PORT);
 		port(SERVER_PORT);
 		before("/*", (q, a) -> {
-			StringBuilder sb = new StringBuilder(q.requestMethod()).append(" | ").append(q.pathInfo())
+			StringBuilder sb = new StringBuilder("IN: ").append(q.requestMethod()).append(" | ").append(q.pathInfo())
 					.append(" | payload: [");
 			if (q.queryParams() != null) {
 				q.queryParams().forEach(key -> {
@@ -68,11 +68,12 @@ public class Server {
 
 		});
 		after("/*", (q, a) -> {
-			logger.info("Server responds: " + a.body());
+			logger.info("OUT: " + a.body());
 		});
 		exception(Exception.class, (e, req, res) -> {
-			// logger.error(e, e);
-			res.body(toJson(error("Error during processing your request, cause: " + e.getMessage())));
+			String errorMessage = toJson(error("Error during processing your request, cause: " + e.getMessage()));
+			logger.error("OUT: " + errorMessage);
+			res.body(errorMessage);
 			res.status(500);
 		});
 		get("serverStatus", (req, res) -> "ok");
@@ -196,7 +197,7 @@ public class Server {
 	}
 	
 	
-	//don't want to add apache collections for this logic:
+	//don't want to add apache b for this logic:
 	private <E extends Enum<E>> boolean isValidEnum(Class<E> clazz, String inputVal){
 		if (inputVal ==null){
 			return false;

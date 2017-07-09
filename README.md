@@ -18,15 +18,6 @@ GSON | JSON marshalling | https://github.com/google/gson
 
 ` java com.barthezzko.server.Server `
 
-## Rest method overview API
-TBD: after implementing
-
-## TBD (to implement)
-* Integration tests with running service
-* Multi-threaded testing (add a delay paramaterisation to TransferServiceImpl) <- to check locking mechanism
-* User -> User
-* Edge cases
-
 ## REST Methods
 RequestType | Method | Params 
 ------------ | ------------ | ------------- 
@@ -39,7 +30,7 @@ POST | /account/topup | String destAccount, BigDecimal amount
 GET | /account/:accountId | String accountId
 GET | /client/:clientId | String clientId
 
-## Testing approache
+## Testing approach
 
 Unit tests:
 * FXTest
