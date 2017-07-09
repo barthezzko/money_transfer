@@ -1,6 +1,7 @@
 package com.barthezzko.transfer.service;
 
 import java.math.BigDecimal;
+import java.util.Collection;
 
 import com.barthezzko.domain.Account;
 import com.barthezzko.domain.Client;
@@ -26,5 +27,7 @@ public interface TransferService {
 	Account getAccount(String accountId);
 	
 	Client getClient(String clientId);
+	
+	Collection<Client> getAllClients();
 	
 }

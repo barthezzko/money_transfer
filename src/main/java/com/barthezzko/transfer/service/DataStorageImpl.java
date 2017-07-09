@@ -1,9 +1,12 @@
 package com.barthezzko.transfer.service;
 
+import java.awt.DefaultFocusTraversalPolicy;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+
+import org.apache.log4j.Logger;
 
 import com.barthezzko.domain.Account;
 import com.barthezzko.domain.Client;
@@ -18,6 +21,7 @@ import com.google.inject.Inject;
 public class DataStorageImpl implements DataStorage {
 	
 	private final KeyGenerator keyGen;
+	private Logger logger = Logger.getLogger(DataStorageImpl.class);
 	
 	@Inject
 	public DataStorageImpl(KeyGenerator keyGen) {
@@ -35,7 +39,9 @@ public class DataStorageImpl implements DataStorage {
 	public Account getAccount(String accountId) {
 		Client client = clientMap.get(keyGen.extractClientFromAccountId(accountId));
 		Objects.requireNonNull(client, "client for account [" + accountId + "] doesn't exist");
-		return client.getAccounts().get(accountId);
+		Account acc = client.getAccounts().get(accountId);
+		logger.info(acc);
+		return acc;
 	}
 
 	@Override
@@ -50,8 +56,7 @@ public class DataStorageImpl implements DataStorage {
 
 	@Override
 	public Collection<Client> getAllClients() {
-		// TODO Auto-generated method stub
-		return null;
+		return clientMap.values();
 	}
 
 }

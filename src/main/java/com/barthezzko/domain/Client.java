@@ -4,9 +4,12 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.google.gson.annotations.Expose;
+
 public class Client {
 	private String clientId;
 	private String clientName;
+	@Expose
 	private Map<String, Account> accounts = new HashMap<>();
 	
 	public Client(String clientId, String clientName) {

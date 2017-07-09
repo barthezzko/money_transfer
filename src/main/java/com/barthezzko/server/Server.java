@@ -164,6 +164,10 @@ public class Server {
 		transferService.registerAccount(yuriPetrovaId, Currency.RUR);
 		transferService.registerAccount(turkishId, Currency.USD);
 		transferService.registerAccount(borisTheBladeId, Currency.EUR);
+		logger.info("Pre-loaded dataset:");
+		transferService.getAllClients().forEach(client->{
+			logger.info(client);
+		});
 	}
 
 	public static String toJson(Object object) {

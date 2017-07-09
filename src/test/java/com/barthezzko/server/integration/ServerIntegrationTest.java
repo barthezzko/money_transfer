@@ -2,6 +2,8 @@ package com.barthezzko.server.integration;
 
 import static org.junit.Assert.assertEquals;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -11,6 +13,7 @@ import org.eclipse.jetty.client.api.ContentResponse;
 import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.http.HttpMethod;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -30,22 +33,26 @@ public class ServerIntegrationTest {
 	Client borisClient = new Client("2", "Boris, The Blade");
 	Client turkishClient = new Client("3", "Turkish");
 
-	Account yuriPetrovaUSD = new Account.Builder().owner(petrovaClient).accountId("USD-1-1").currency(Currency.USD)
+	Account yuriPetrovaUSD = new Account.Builder().accountId("USD-1-1").currency(Currency.USD).amountNet(bigDec(0))
 			.build();
-	Account yuriPetrovaRUR = new Account.Builder().owner(petrovaClient).accountId("RUR-1-2").currency(Currency.RUR)
+	Account yuriPetrovaRUR = new Account.Builder().accountId("RUR-1-2").currency(Currency.RUR).amountNet(bigDec(0))
 			.build();
-	Account turkishUSD = new Account.Builder().owner(turkishClient).accountId("RUR-2-3").currency(Currency.USD).build();
-	Account borisTheBladeEUR = new Account.Builder().owner(borisClient).accountId("RUR-3-4").currency(Currency.EUR)
+	Account borisTheBladeEUR = new Account.Builder().accountId("EUR-2-4").currency(Currency.EUR).amountNet(bigDec(0))
 			.build();
-
+	Account turkishUSD = new Account.Builder().accountId("USD-3-3").currency(Currency.USD).amountNet(bigDec(0)).build();
+	
 	@FunctionalInterface
 	interface HttpRequestCallback {
 		void onResponse(String response);
 	}
 
-	@Before
-	public void before() {
+	@BeforeClass
+	public static void beforeClass() {
 		Server.main(new String[] { "addFakeData" });
+	}
+
+	private BigDecimal bigDec(double amnt){
+		return BigDecimal.valueOf(amnt).setScale(0, RoundingMode.HALF_UP);
 	}
 
 	private void invoke(String url, HttpMethod method, HttpRequestCallback callback) {
@@ -106,16 +113,16 @@ public class ServerIntegrationTest {
 			String expectedJson = gson.toJson(Server.success(yuriPetrovaUSD));
 			assertEquals(expectedJson, content);
 		});
-		invoke("account/USD-1-2", HttpMethod.GET, (content) -> {
+		invoke("account/RUR-1-2", HttpMethod.GET, (content) -> {
 			String expectedJson = gson.toJson(Server.success(yuriPetrovaRUR));
 			assertEquals(expectedJson, content);
 		});
-		invoke("account/USD-2-3", HttpMethod.GET, (content) -> {
-			String expectedJson = gson.toJson(Server.success(turkishUSD));
+		invoke("account/EUR-2-4", HttpMethod.GET, (content) -> {
+			String expectedJson = gson.toJson(Server.success(borisTheBladeEUR));
 			assertEquals(expectedJson, content);
 		});
-		invoke("account/USD-3-4", HttpMethod.GET, (content) -> {
-			String expectedJson = gson.toJson(Server.success(borisTheBladeEUR));
+		invoke("account/USD-3-3", HttpMethod.GET, (content) -> {
+			String expectedJson = gson.toJson(Server.success(turkishUSD));
 			assertEquals(expectedJson, content);
 		});
 	}

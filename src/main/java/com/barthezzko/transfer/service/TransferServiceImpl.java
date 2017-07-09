@@ -1,6 +1,7 @@
 package com.barthezzko.transfer.service;
 
 import java.math.BigDecimal;
+import java.util.Collection;
 import java.util.Objects;
 
 import org.apache.log4j.Logger;
@@ -111,10 +112,11 @@ public class TransferServiceImpl implements TransferService {
 		Objects.requireNonNull(client, "client to add the account should exist");
 		String accountId = keyGen.nextAccountId(clientId, curr);
 		synchronized (client) {
-			Account.Builder bldr = new Builder().owner(client).accountId(accountId).currency(curr)
+			Account.Builder bldr = new Builder().accountId(accountId).currency(curr)
 					.amountNet(BigDecimal.ZERO);
 			Account acc = bldr.build();
-			client.addAccount(acc);
+			ds.addAccount(client, acc);
+			//client.addAccount(acc);
 		}
 		return accountId;
 	}
@@ -149,6 +151,11 @@ public class TransferServiceImpl implements TransferService {
 	@Override
 	public Client getClient(String clientId) {
 		return ds.getClient(clientId);
+	}
+
+	@Override
+	public Collection<Client> getAllClients() {
+		return ds.getAllClients();
 	}
 
 }
