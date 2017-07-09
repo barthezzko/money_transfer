@@ -1,6 +1,6 @@
 # money_transfer
 
-This is a simple RESTful web-app emulating money traferring service
+This is a simple RESTful web-app emulating money transferring service
 
 ## Technologies/frameworks used:
 
@@ -26,3 +26,24 @@ TBD: after implementing
 * Multi-threaded testing (add a delay paramaterisation to TransferServiceImpl) <- to check locking mechanism
 * User -> User
 * Edge cases
+
+## REST Methods
+RequestType | Method | Params 
+------------ | ------------ | ------------- 
+GET | /serverStatus | NONE
+POST | /client/add | String clientName
+POST | /account/add | String clientId, String{RUR, EUR, USD} currency
+POST | /transfer/acc2acc | String sourceAcc, String destAcc, BigDecimal amount
+POST | /transfer/cli2cli | String sourceClient, String destClient, BigDecimal amount, String{RUR, EUR, USD} currency
+POST | /account/topup | String destAccount, BigDecimal amount
+GET | /account/:accountId | String accountId
+GET | /client/:clientId | String clientId
+
+## Testing approache
+
+Unit tests:
+* FXTest
+* KeyGeneratorTest
+
+IntegrationTest
+* ServerIntegrationTest
