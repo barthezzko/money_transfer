@@ -8,6 +8,7 @@ import static spark.Spark.port;
 import static spark.Spark.post;
 
 import java.math.BigDecimal;
+import java.util.Objects;
 
 import org.apache.log4j.Logger;
 
@@ -17,6 +18,7 @@ import com.google.gson.Gson;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 
+import spark.Request;
 import spark.ResponseTransformer;
 
 public class Server {
@@ -50,25 +52,26 @@ public class Server {
 		logger.info("Starting REST service on port:" + SERVER_PORT);
 		port(SERVER_PORT);
 		before("/*", (q, a) -> {
-			StringBuilder sb = new StringBuilder(q.requestMethod()).append(" | ").append(q.pathInfo()).append(" | payload: [");
+			StringBuilder sb = new StringBuilder(q.requestMethod()).append(" | ").append(q.pathInfo())
+					.append(" | payload: [");
 			if (q.queryParams() != null) {
 				q.queryParams().forEach(key -> {
 					sb.append(String.format("%s=%s; ", key, q.queryParams(key)));
 				});
 			}
-			if (q.params()!=null){
+			if (q.params() != null) {
 				q.params().entrySet().forEach(entry -> {
 					sb.append(String.format("%s=%s; ", entry.getKey(), entry.getValue()));
 				});
 			}
-			logger.info(sb.append("]").toString());	
+			logger.info(sb.append("]").toString());
 
 		});
 		after("/*", (q, a) -> {
 			logger.info("Server responds: " + a.body());
 		});
 		exception(Exception.class, (e, req, res) -> {
-			//logger.error(e, e);
+			// logger.error(e, e);
 			res.body(toJson(error("Error during processing your request, cause: " + e.getMessage())));
 			res.status(500);
 		});
@@ -78,28 +81,27 @@ public class Server {
 
 	private void addAccountMappings() {
 		post("/client/add", (req, res) -> {
-			return success("Client [clientId=" + transferService.registerClient(req.queryParams("clientName"))
-					+ "] has been created");
+			return success("Client [clientId=" + transferService.registerClient(param(req, "clientName"))		+ "] has been created");
 		}, json());
 		post("/account/add", (req, res) -> {
-			String clientId = req.queryParams("clientId");
+			String clientId = param(req, "clientId");
 			return success("Account [accountId "
-					+ transferService.registerAccount(clientId, Currency.valueOf(req.queryParams("currency")))
+					+ transferService.registerAccount(clientId, toEnum(req, Currency.class, "currency"))
 					+ " has been created for clientId " + clientId);
 		}, json());
 		post("/transfer/acc2acc", (req, res) -> {
-			String sourceAccount = req.queryParams("sourceAcc");
-			String targetAccount = req.queryParams("destAcc");
-			BigDecimal amount = BigDecimal.valueOf(Double.valueOf(req.queryParams("amount")));
+			String sourceAccount = param(req, "sourceAcc");
+			String targetAccount = param(req, "destAcc");
+			BigDecimal amount = BigDecimal.valueOf(Double.valueOf(param(req, "amount")));
 			transferService.transferAcc2Acc(sourceAccount, targetAccount, amount);
 			return success("Account-to-Account transfer [" + sourceAccount + "->" + targetAccount + ", amount=" + amount
 					+ "] has been created");
 		}, json());
 		post("/transfer/cli2cli", (req, res) -> {
-			String sourceClient = req.queryParams("sourceClient");
-			String targetClient = req.queryParams("destClient");
-			BigDecimal amount = BigDecimal.valueOf(Double.valueOf(req.queryParams("amount")));
-			Currency currency = Currency.valueOf(req.queryParams("currency"));
+			String sourceClient = param(req, "sourceClient");
+			String targetClient = param(req, "destClient");
+			BigDecimal amount = BigDecimal.valueOf(Double.valueOf(param(req, "amount")));
+			Currency currency = toEnum(req, Currency.class, "currency");
 
 			transferService.transferC2C(sourceClient, targetClient, amount, currency);
 			return success("Client-To-Client transfer [" + sourceClient + "->" + targetClient + ", amount=" + amount
@@ -107,18 +109,18 @@ public class Server {
 		}, json());
 
 		post("/account/topup", (req, res) -> {
-			String destAccount = req.queryParams("destAccount");
-			BigDecimal amount = BigDecimal.valueOf(Double.valueOf(req.queryParams("amount")));
+			String destAccount = param(req, "destAccount");
+			BigDecimal amount = BigDecimal.valueOf(Double.valueOf(param(req, "amount")));
 
 			transferService.topUpAccount(destAccount, amount);
 			return success("Account [accountId=" + destAccount + "] was topped up by " + amount);
 		}, json());
 
 		get("/account/:accountId", (req, res) -> {
-			return success(transferService.getAccount(req.params("accountId")));
+			return success(transferService.getAccount(param(req, "accountId")));
 		}, json());
 		get("/client/:clientId", (req, res) -> {
-			return success(transferService.getClient(req.params("clientId")));
+			return success(transferService.getClient(param(req, "clientId")));
 		});
 	}
 
@@ -165,7 +167,7 @@ public class Server {
 		transferService.registerAccount(turkishId, Currency.USD);
 		transferService.registerAccount(borisTheBladeId, Currency.EUR);
 		logger.info("Pre-loaded dataset:");
-		transferService.getAllClients().forEach(client->{
+		transferService.getAllClients().forEach(client -> {
 			logger.info(client);
 		});
 	}
@@ -176,5 +178,34 @@ public class Server {
 
 	private static ResponseTransformer json() {
 		return Server::toJson;
+	}
+
+	private String param(Request req, String name) {
+		String value = "GET".equals(req.requestMethod()) ? req.params(name) : req.queryParams(name);
+		Objects.requireNonNull(value, "Input parameter [" + name + "] should not be empty");
+		return value;
+	}
+	@SuppressWarnings("unchecked")
+	private <T extends Enum> T toEnum(Request req, Class<T> clazz, String paramName){
+		String val = param(req, paramName);
+		if (isValidEnum(clazz, val)){
+			return (T) Enum.valueOf(clazz, val);
+		} else {
+			throw new IllegalArgumentException("Input value [" + val + "] is not valid for Enum class " + clazz);
+		}
+	}
+	
+	
+	//don't want to add apache collections for this logic:
+	private <E extends Enum<E>> boolean isValidEnum(Class<E> clazz, String inputVal){
+		if (inputVal ==null){
+			return false;
+		}
+		try{
+			Enum.valueOf(clazz, inputVal);
+			return true;
+		} catch(IllegalArgumentException e){
+			return false;
+		}
 	}
 }
