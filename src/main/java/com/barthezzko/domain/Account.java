@@ -2,19 +2,17 @@ package com.barthezzko.domain;
 
 import java.math.BigDecimal;
 
+import com.google.gson.annotations.Expose;
+
 public class Account {
 
-	private String clientName;
-	private Long accountId;
+	private String accountId;
 	private BigDecimal amountNet;
 	private Currency currency;
 	
 	private Account(){}
 	
-	public String getClientName() {
-		return clientName;
-	}
-	public Long getAccountId() {
+	public String getAccountId() {
 		return accountId;
 	}
 	public BigDecimal getAmountNet() {
@@ -24,26 +22,23 @@ public class Account {
 		return currency;
 	}
 	
-	public AccountInfo getAccountInfo(){
-		return new AccountInfo(clientName, accountId, amountNet, currency);
-	}
-	
 	public void topUp(BigDecimal topUpAmount){
 		amountNet = amountNet.add(topUpAmount);
 	}
 	
+	@Override
+	public String toString() {
+		return "Account [accountId=" + accountId + ", amountNet=" + amountNet + ", currency="
+				+ currency + "]";
+	}
+
 	public static class Builder {
 		
-		private String clientName;
-		private Long accountId;
+		private String accountId;
 		private BigDecimal amountNet;
 		private Currency currency;
 		
-		public Builder clientName(String clientName) {
-			this.clientName = clientName;
-			return this;
-		}
-		public Builder accountId(Long accountId) {
+		public Builder accountId(String accountId) {
 			this.accountId = accountId;
 			return this;
 		}
@@ -58,7 +53,6 @@ public class Account {
 		public Account build(){
 			Account acc = new Account();
 			acc.accountId = accountId;
-			acc.clientName = clientName;
 			acc.amountNet = amountNet;
 			acc.currency = currency;
 			return acc;
