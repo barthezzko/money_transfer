@@ -47,20 +47,8 @@ public class TransferServiceImpl implements TransferService {
 		Account destinationAccount = ds.getAccount(destinationAccountId);
 		Objects.requireNonNull(sourceAccount, "sourceAccount must exist");
 		Objects.requireNonNull(destinationAccount, "destinationAccount must exist");
-		// Concurrency in Practice
-		if (sourceAccount.getAccountId().compareTo(destinationAccount.getAccountId()) > 0) {
-			synchronized (sourceAccount) {
-				synchronized (destinationAccount) {
-					transferInt(sourceAccount, destinationAccount, amount);
-				}
-			}
-		} else {
-			synchronized (destinationAccount) {
-				synchronized (sourceAccount) {
-					transferInt(sourceAccount, destinationAccount, amount);
-				}
-			}
-		}
+		
+		acquireLocksAndTransfer(sourceAccount, destinationAccount, amount);
 	}
 
 	/**
@@ -105,19 +93,21 @@ public class TransferServiceImpl implements TransferService {
 		return clientId;
 	}
 
+	/* 
+	 * Removed synchronization - worst case,  new account will not be used for acc2acc or cli2cli
+	 * (non-Javadoc)
+	 * @see com.barthezzko.transfer.service.TransferService#registerAccount(java.lang.String, com.barthezzko.domain.Currency)
+	 */
 	@Override
 	public String registerAccount(String clientId, Currency curr) {
 		Objects.requireNonNull(clientId, "clientId can't be empty");
 		Client client = ds.getClient(clientId);
 		Objects.requireNonNull(client, "client to add the account should exist");
 		String accountId = keyGen.nextAccountId(clientId, curr);
-		synchronized (client) {
-			Account.Builder bldr = new Builder().accountId(accountId).currency(curr)
-					.amountNet(BigDecimal.ZERO);
-			Account acc = bldr.build();
-			ds.addAccount(client, acc);
-			//client.addAccount(acc);
-		}
+		Account.Builder bldr = new Builder().accountId(accountId).currency(curr)
+				.amountNet(BigDecimal.ZERO);
+		Account acc = bldr.build();
+		ds.addAccount(client, acc);
 		return accountId;
 	}
 
@@ -139,8 +129,25 @@ public class TransferServiceImpl implements TransferService {
 		Objects.requireNonNull(destinationAccount,
 				currency + " account is not found for destination client " + destClientId);
 
-		transferInt(sourceAccount, destinationAccount, amount);
+		acquireLocksAndTransfer(sourceAccount, destinationAccount, amount);
 	}
+	
+	private void acquireLocksAndTransfer(Account sourceAccount, Account destinationAccount, BigDecimal transferAmount){
+		if (sourceAccount.getAccountId().compareTo(destinationAccount.getAccountId()) > 0) {
+			synchronized (sourceAccount) {
+				synchronized (destinationAccount) {
+					transferInt(sourceAccount, destinationAccount, transferAmount);
+				}
+			}
+		} else {
+			synchronized (destinationAccount) {
+				synchronized (sourceAccount) {
+					transferInt(sourceAccount, destinationAccount, transferAmount);
+				}
+			}
+		}
+	}
+	
 
 	private Account accountLookup(Client client, Currency curr, BigDecimal amountToLookFor) {
 		return client.getAccounts().values().stream()
