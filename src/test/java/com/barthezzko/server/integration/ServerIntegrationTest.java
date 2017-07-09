@@ -12,9 +12,7 @@ import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.ContentResponse;
 import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.http.HttpMethod;
-import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import com.barthezzko.domain.Account;
@@ -109,36 +107,50 @@ public class ServerIntegrationTest {
 
 	@Test
 	public void getAccount() {
-		invoke("account/USD-1-1", HttpMethod.GET, (content) -> {
-			String expectedJson = gson.toJson(Server.success(yuriPetrovaUSD));
-			assertEquals(expectedJson, content);
-		});
 		invoke("account/RUR-1-2", HttpMethod.GET, (content) -> {
 			String expectedJson = gson.toJson(Server.success(yuriPetrovaRUR));
-			assertEquals(expectedJson, content);
-		});
-		invoke("account/EUR-2-4", HttpMethod.GET, (content) -> {
-			String expectedJson = gson.toJson(Server.success(borisTheBladeEUR));
-			assertEquals(expectedJson, content);
-		});
-		invoke("account/USD-3-3", HttpMethod.GET, (content) -> {
-			String expectedJson = gson.toJson(Server.success(turkishUSD));
 			assertEquals(expectedJson, content);
 		});
 	}
 
 	@Test
-	@Ignore
 	public void insertThanGet() {
-		invoke("account/add", HttpMethod.POST, map(), (content) -> {
-			assertEquals(gson.toJson(Server.success("Account 123 created")), content);
+		invoke("account/add", HttpMethod.POST, map("clientId", "1", "currency", "EUR"), (content) -> {
+			assertEquals(gson.toJson(Server.success("Account [accountId EUR-1-5 has been created for clientId 1")), content);
 		});
-		/*
-		 * invoke("account/123", HttpMethod.GET, (content)->{
-		 * assertEquals(gson.toJson(Server.success(new AccountInfo("Tony", 123L,
-		 * BigDecimal.ZERO, Currency.EUR))), content.getContentAsString()); });
-		 */
+		invoke("account/add", HttpMethod.POST, map("clientId", "4", "currency", "EUR"), (content) -> {
+			assertEquals(gson.toJson(Server.error("Error during processing your request, cause: client to add the account should exist")), content);
+		});
 	}
+	@Test
+	public void acc2acc() {
+		invoke("transfer/acc2acc", HttpMethod.POST, map("sourceAcc", "USD-1-1", "destAcc", "USD-3-3", "amount", "100"), (content) -> {
+			assertEquals(gson.toJson(Server.error("Error during processing your request, cause: Unsufficient funds for account [id\u003dUSD-1-1]")), content);
+		});
+		invoke("account/topup", HttpMethod.POST, map("destAccount", "USD-1-1", "amount", "200"), (content) -> {
+			assertEquals(gson.toJson(Server.success("Account [accountId\u003dUSD-1-1] was topped up by 200.0")), content);
+		});
+		invoke("transfer/acc2acc", HttpMethod.POST, map("sourceAcc", "USD-1-1", "destAcc", "USD-3-3", "amount", "100"), (content) -> {
+			assertEquals(gson.toJson(Server.success("Account-to-Account transfer [USD-1-1-\u003eUSD-3-3, amount\u003d100.0] has been created")), content);
+		});
+	}
+	
+	@Test
+	public void client2client() {
+		invoke("transfer/cli2cli", HttpMethod.POST, map("sourceClient", "1", "destClient", "2", "amount", "100", "currency", "EUR"), (content) -> {
+			assertEquals(gson.toJson(Server.error("Error during processing your request, cause: EUR account is not found for source client 1")), content);
+		});
+		invoke("account/add", HttpMethod.POST, map("clientId", "1", "currency", "EUR"), (content) -> {
+			assertEquals(gson.toJson(Server.success("Account [accountId EUR-1-6 has been created for clientId 1")), content);
+		});
+		invoke("account/topup", HttpMethod.POST, map("destAccount", "EUR-1-6", "amount", "200"), (content) -> {
+			assertEquals(gson.toJson(Server.success("Account [accountId\u003dEUR-1-6] was topped up by 200.0")), content);
+		});
+		invoke("transfer/cli2cli", HttpMethod.POST, map("sourceClient", "1", "destClient", "2", "amount", "100", "currency", "EUR"), (content) -> {
+			assertEquals(gson.toJson(Server.success("Client-To-Client transfer [1-\u003e2, amount\u003d100.0] has been created")), content);
+		});
+	}
+	
 
 	private Map<String, String> map(String... strings) {
 		if (strings.length % 2 != 0) {

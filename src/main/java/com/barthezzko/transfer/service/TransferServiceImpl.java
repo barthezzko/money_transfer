@@ -135,7 +135,7 @@ public class TransferServiceImpl implements TransferService {
 		Account sourceAccount = accountLookup(sourceClient, currency, amount);
 		Account destinationAccount = accountLookup(destClient, currency, BigDecimal.ZERO); 
 
-		Objects.requireNonNull(sourceClient, currency + " account is not found for source client " + sourceClientId);
+		Objects.requireNonNull(sourceAccount, currency + " account is not found for source client " + sourceClientId);
 		Objects.requireNonNull(destinationAccount,
 				currency + " account is not found for destination client " + destClientId);
 
@@ -144,7 +144,7 @@ public class TransferServiceImpl implements TransferService {
 
 	private Account accountLookup(Client client, Currency curr, BigDecimal amountToLookFor) {
 		return client.getAccounts().values().stream()
-				.filter(acc -> curr == acc.getCurrency() && acc.getAmountNet().compareTo(amountToLookFor) > 0)
+				.filter(acc -> curr == acc.getCurrency() && acc.getAmountNet().compareTo(amountToLookFor) >= 0)
 				.findFirst().orElse(null);
 	}
 

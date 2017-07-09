@@ -68,7 +68,7 @@ public class Server {
 			logger.info("Server responds: " + a.body());
 		});
 		exception(Exception.class, (e, req, res) -> {
-			logger.error(e, e);
+			//logger.error(e, e);
 			res.body(toJson(error("Error during processing your request, cause: " + e.getMessage())));
 			res.status(500);
 		});
@@ -83,9 +83,9 @@ public class Server {
 		}, json());
 		post("/account/add", (req, res) -> {
 			String clientId = req.queryParams("clientId");
-			return success("Account [accountId="
+			return success("Account [accountId "
 					+ transferService.registerAccount(clientId, Currency.valueOf(req.queryParams("currency")))
-					+ " has been created for clientId=" + clientId);
+					+ " has been created for clientId " + clientId);
 		}, json());
 		post("/transfer/acc2acc", (req, res) -> {
 			String sourceAccount = req.queryParams("sourceAcc");
@@ -95,7 +95,7 @@ public class Server {
 			return success("Account-to-Account transfer [" + sourceAccount + "->" + targetAccount + ", amount=" + amount
 					+ "] has been created");
 		}, json());
-		post("/transfer/acc2acc", (req, res) -> {
+		post("/transfer/cli2cli", (req, res) -> {
 			String sourceClient = req.queryParams("sourceClient");
 			String targetClient = req.queryParams("destClient");
 			BigDecimal amount = BigDecimal.valueOf(Double.valueOf(req.queryParams("amount")));
